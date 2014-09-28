@@ -1,39 +1,9 @@
-library(maptools)
-library(mapproj)
-library(ggplot2)
 
-# a useable shapefile can be found here:
-# http://www.arcgis.com/home/item.html?id=f7f805eb65eb4ab787a0a3e1116ca7e5
-# census tigerline files will also work, though they have different variables
-# so code would need to be modified to account for that
-shape_path <- "the path to states.shp"
+source("hiakoroFunctions.R")
 
-centerState <- function(.df) {
-  #.df is a data frame with variables x and y
-  #returns a data frame that has been centered where
-  #center is the midpoint of the min and max x and y values
-  .df$x <- .df$x - (diff(range(.df$x, na.rm = T))/2 + min(.df$x, na.rm = T))
-  .df$y <- .df$y - (diff(range(.df$y, na.rm = T))/2 + min(.df$y, na.rm = T))
-  return(.df)
-}
-
-scaleState <- function(.df, scale_matrix, scale_factor, x_shift, y_shift) {
-  #.df is a data frame with numeric variables x and y
-  #scale_matrix determines how states are scaled, it should be 2x2
-  #scale_factor allows for tweaking of the extent of scaling, it should be a number
-  #x_shift and y_shift determin where final shape ends up, units are consistend with 
-  #.df units
-  #returns a data frame with coordinates that have been centered, scaled, and shifted from
-  #the origin
-  
-  .df <- centerState(.df)
-  coords <- t(cbind(.df$x, .df$y))
-  scaled_coord <- t(scale_factor*scale_matrix %*% coords)
-  
-  .df$x <- scaled_coord[,1] + x_shift
-  .df$y <- scaled_coord[,2] + y_shift
-  return(.df)
-}
+# a useable shapefiles can be found in this repository
+shape_path <- "/states/states_21basic/states.shp" #state boundaries
+shape_path <- "/states/UScounties/UScounties.shp" #county boundaries
 
 #load shape file, grab the juicy bits and 
 #create an id variable for merging
@@ -56,9 +26,10 @@ ggplot(data = us50, aes(x=x, y=y, group = id)) + geom_polygon(color = "black", f
 #split out continental US, AK and HI
 #we're gonna scale and shift HI and AK individually
 
-cont_us <- us50[us50$STATE_ABBR != "HI" & us50$STATE_ABBR != "AK", ]
-ak <- us50[us50$STATE_ABBR == "AK", ]
-hi <- us50[us50$STATE_ABBR == "HI", ]
+
+cont_us <- us50[us50$STATE_FIPS != "15" & us50$STATE_FIPS != "02", ]
+ak <- us50[us50$STATE_FIPS == "02", ]
+hi <- us50[us50$STATE_FIPS == "15", ]
 
 #if you want to plot points in HI or AK
 #for instance, city locations
